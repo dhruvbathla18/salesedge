@@ -1,0 +1,40 @@
+{
+  "name": "mist-avinya-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src.js",
+    "start": "node src.js",
+    "test": "node --test \"test/unit/**/*.test.js\"",
+    "test:unit": "node --test \"test/unit/**/*.test.js\"",
+    "test:property": "node --test \"test/property/**/*.test.js\"",
+    "test:integration": "node --test \"test/integration/**/*.test.js\"",
+    "test:contract": "node --test \"test/contract/**/*.test.js\"",
+    "seed": "node scripts/seed.js",
+    "db:sync": "node scripts/sync-db.js",
+    "db:view": "node scripts/view-data.js",
+    "check:aws": "node scripts/check-aws-connection.js",
+    "recordings:generate": "node scripts/generate-recordings.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1117.0",
+    "@aws-sdk/s3-request-presigner": "3.1117.0",
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.6",
+    "dotenv": "16.6.1",
+    "express": "4.22.2",
+    "express-rate-limit": "7.5.1",
+    "helmet": "8.3.0",
+    "jsonwebtoken": "9.0.3",
+    "morgan": "1.11.0",
+    "pg": "8.23.0",
+    "pg-hstore": "2.3.4",
+    "sequelize": "6.37.8",
+    "uuid": "14.0.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "fast-check": "4.9.0",
+    "nodemon": "3.1.14"
+  }
+}

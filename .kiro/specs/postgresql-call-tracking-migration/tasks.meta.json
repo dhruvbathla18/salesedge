@@ -1,0 +1,490 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Migrate and pin server dependencies and test commands": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439149
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410486729
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410923952
+      }
+    ],
+    "1.2 Implement validated environment configuration": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439267
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410495869
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410932414
+      }
+    ],
+    "1.3 Rewrite the Sequelize database module": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439396
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410972321
+      }
+    ],
+    "1.4 Create shared HTTP, error, pagination, and date utilities": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439495
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410502332
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410941372
+      }
+    ],
+    "2.1 Define shared enum constants": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439593
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410508812
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410952378
+      }
+    ],
+    "2.2 Implement Employee and Device models": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439706
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410982119
+      }
+    ],
+    "2.3 Implement CallLog and CallFormData models": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439809
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788411002635
+      }
+    ],
+    "2.4 Implement the CallRecording model": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410439927
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788411024024
+      }
+    ],
+    "2.5 Implement the append-only AuditLog model": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440017
+      },
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788411031087
+      }
+    ],
+    "2.6 Assemble model exports and associations": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440110
+      }
+    ],
+    "2.7 Implement PostgreSQL schema and audit guards": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440202
+      }
+    ],
+    "2.8 Rewrite the database synchronization command": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440313
+      }
+    ],
+    "3. Checkpoint - Ensure all foundation and schema tests pass": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440402
+      }
+    ],
+    "4.1 Implement common request validation middleware and schemas": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440499
+      }
+    ],
+    "4.2 Implement resource-specific validation schemas": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440604
+      }
+    ],
+    "4.3 Implement the config-backed principal provider and authentication service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440719
+      }
+    ],
+    "4.4 Rewrite authorization middleware": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440811
+      }
+    ],
+    "4.5 Implement the audit service and request metadata helper": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410440907
+      }
+    ],
+    "4.6 Implement canonical and React compatibility DTOs": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441007
+      }
+    ],
+    "4.7 Implement the shared query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441105
+      }
+    ],
+    "4.8 Implement security and centralized error middleware": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441200
+      }
+    ],
+    "5.1 Implement employee domain operations": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441295
+      }
+    ],
+    "5.2 Implement device domain operations": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441390
+      }
+    ],
+    "5.3 Implement call category transition operations": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441500
+      }
+    ],
+    "5.4 Implement form and recording child operations": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441611
+      }
+    ],
+    "5.5 Implement employee and device query services": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441711
+      }
+    ],
+    "5.6 Implement call query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441842
+      }
+    ],
+    "5.7 Implement form query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410441948
+      }
+    ],
+    "5.8 Implement recording query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442047
+      }
+    ],
+    "5.9 Implement audit query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442149
+      }
+    ],
+    "5.10 Implement dashboard and activity query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442246
+      }
+    ],
+    "5.11 Implement the company projection query service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442361
+      }
+    ],
+    "6.1 Rewrite the private S3 signer service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442468
+      }
+    ],
+    "6.2 Implement the recording playback service": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442564
+      }
+    ],
+    "7.1 Rewrite the authentication controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442660
+      }
+    ],
+    "7.2 Implement the employee controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442768
+      }
+    ],
+    "7.3 Implement the device controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442880
+      }
+    ],
+    "7.4 Implement the call controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410442999
+      }
+    ],
+    "7.5 Implement the form controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443094
+      }
+    ],
+    "7.6 Implement the recording controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443188
+      }
+    ],
+    "7.7 Implement the audit controller": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443279
+      }
+    ],
+    "7.8 Implement dashboard and company controllers": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443377
+      }
+    ],
+    "8.1 Implement authentication routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443481
+      }
+    ],
+    "8.2 Implement employee routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443580
+      }
+    ],
+    "8.3 Implement device routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443693
+      }
+    ],
+    "8.4 Implement call routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443788
+      }
+    ],
+    "8.5 Implement form routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410443896
+      }
+    ],
+    "8.6 Implement recording routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444066
+      }
+    ],
+    "8.7 Implement audit routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444209
+      }
+    ],
+    "8.8 Implement dashboard and company routes": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444397
+      }
+    ],
+    "8.9 Assemble the API route index": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444543
+      }
+    ],
+    "8.10 Rewrite application startup and middleware wiring": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444681
+      }
+    ],
+    "9. Checkpoint - Ensure all service and API wiring tests pass": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444809
+      }
+    ],
+    "10.1 Create deterministic-cardinality dynamic seed fixture builders": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410444949
+      }
+    ],
+    "10.2 Implement post-insertion seed invariant verification": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445085
+      }
+    ],
+    "10.3 Rewrite the canonical transactional seed command": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445232
+      }
+    ],
+    "10.4 Eliminate duplicate seed entry points": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445369
+      }
+    ],
+    "12.1 Add canonical root database commands": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445511
+      }
+    ],
+    "12.2 Remove all remaining Mongo runtime artifacts and obsolete modules": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445654
+      }
+    ],
+    "13. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "87f3786e-4b8f-4519-8487-cc66baa9b08d",
+        "chatSessionId": "sess_5471620e-6d6a-4b4e-8df3-c3becca257f5",
+        "timestamp": 1788410445798
+      }
+    ]
+  }
+}
