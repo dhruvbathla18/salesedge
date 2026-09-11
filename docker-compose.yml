@@ -1,0 +1,72 @@
+services:
+  backend:
+    build:
+      context: ./server
+    image: salesedge-backend
+    container_name: salesedge-backend
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+    expose:
+      - "5000"
+    # Persist generated call recordings across container restarts
+    volumes:
+      - recordings:/app/public/recordings
+    networks:
+      - salesedge
+    # Only needed when using the bundled postgres service (profile: local-db)
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
+  frontend:
+    build:
+      context: ./client
+      args:
+        # Relative path so nginx reverse-proxies /api to the backend.
+        VITE_API_URL: /api
+    image: salesedge-frontend
+    container_name: salesedge-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - salesedge
+
+  # Optional local PostgreSQL. Skip this if you use AWS RDS.
+  # Enable with:  docker compose --profile local-db up -d --build
+  postgres:
+    image: postgres:16-alpine
+    container_name: salesedge-postgres
+    restart: unless-stopped
+    profiles:
+      - local-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-mist_avinya_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-mist_avinya_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - salesedge
+
+volumes:
+  recordings:
+  pgdata:
+
+networks:
+  salesedge:
+    driver: bridge
