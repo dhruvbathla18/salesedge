@@ -24,18 +24,51 @@ if (s3Enabled) {
   client = new S3Client({ region: process.env.AWS_REGION || 'ap-south-1' });
 }
 
+// Recordings live under this prefix in the bucket:
+//   recordings/{deviceSerial}/{YYYY}/{MM}/{DD}/{uuid}/{filename}.m4a
+const S3_KEY_PREFIX = 'recordings/';
+
+/**
+ * Normalize a stored s3_key into the exact object key used in the bucket.
+ * Handles values that were stored as a full s3:// URI, a leading slash, or
+ * without the "recordings/" prefix.
+ */
+export const normalizeS3Key = (rawKey) => {
+  if (!rawKey) return '';
+  let key = String(rawKey).trim();
+
+  // Strip a full "s3://bucket/..." URI down to just the object key.
+  if (key.startsWith('s3://')) {
+    const withoutScheme = key.slice('s3://'.length);
+    const firstSlash = withoutScheme.indexOf('/');
+    key = firstSlash === -1 ? '' : withoutScheme.slice(firstSlash + 1);
+  }
+
+  // Strip a leading slash, if present.
+  key = key.replace(/^\/+/, '');
+
+  // Ensure the "recordings/" prefix is present exactly once.
+  if (!key.startsWith(S3_KEY_PREFIX)) {
+    key = `${S3_KEY_PREFIX}${key}`;
+  }
+
+  return key;
+};
+
 /**
  * Generate audio playback URL (S3 Presigned URL if configured, or local static file URL)
  */
 export const playbackUrl = async (key, localFilePath = '') => {
   // 1. Try AWS S3 Presigned URL if credentials configured
   try {
-    if (client && process.env.AWS_S3_BUCKET) {
+    if (client && process.env.AWS_S3_BUCKET && key) {
+      const objectKey = normalizeS3Key(key);
       return await getSignedUrl(
         client,
         new GetObjectCommand({
           Bucket: process.env.AWS_S3_BUCKET,
-          Key: key,
+          // The SDK URL-encodes the key (including spaces) when signing.
+          Key: objectKey,
         }),
         { expiresIn: parseInt(process.env.S3_PLAYBACK_EXPIRY_SECONDS || '300', 10) }
       );
