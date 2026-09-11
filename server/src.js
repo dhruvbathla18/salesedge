@@ -140,7 +140,15 @@ const startServer = async (port) => {
       }
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
+    console.error('❌ Failed to start server');
+    console.error('   name:', error?.name);
+    console.error('   message:', error?.message);
+    if (error?.parent?.message) console.error('   db error:', error.parent.message);
+    if (error?.original?.message) console.error('   original:', error.original.message);
+    if (Array.isArray(error?.issues)) {
+      console.error('   env issues:', JSON.stringify(error.issues));
+    }
+    console.error(error?.stack || error);
     process.exit(1);
   }
 };
