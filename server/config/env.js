@@ -80,8 +80,10 @@ const environmentSchema = z
     }),
     AWS_REGION: requiredString('AWS_REGION'),
     AWS_S3_BUCKET: requiredString('AWS_S3_BUCKET'),
-    AWS_ACCESS_KEY_ID: requiredString('AWS_ACCESS_KEY_ID'),
-    AWS_SECRET_ACCESS_KEY: requiredString('AWS_SECRET_ACCESS_KEY'),
+    // Optional: when omitted, the AWS SDK resolves credentials from the
+    // environment / EC2 instance role / other default provider chain sources.
+    AWS_ACCESS_KEY_ID: z.string().trim().min(1).optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().trim().min(1).optional(),
     S3_PLAYBACK_EXPIRY_SECONDS: integerFromEnvironment(
       'S3_PLAYBACK_EXPIRY_SECONDS',
       1,

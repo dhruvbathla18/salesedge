@@ -10,6 +10,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
+      # Allow the AWS SDK inside the container to use the EC2 instance role.
+      # (Credentials are resolved from IMDS at 169.254.169.254.)
+      AWS_EC2_METADATA_DISABLED: "false"
     expose:
       - "5000"
     # Persist generated call recordings across container restarts

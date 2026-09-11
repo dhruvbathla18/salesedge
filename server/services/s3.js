@@ -8,14 +8,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const recordingsDir = path.join(__dirname, '../public/recordings');
 
-const hasAwsCredentials =
-  process.env.AWS_ACCESS_KEY_ID &&
-  process.env.AWS_ACCESS_KEY_ID !== 'local_aws_access_key_not_configured' &&
-  process.env.AWS_SECRET_ACCESS_KEY &&
-  process.env.AWS_SECRET_ACCESS_KEY !== 'local_aws_secret_key_not_configured';
+// Only skip S3 when explicit placeholder keys are present (local dev). When no
+// keys are set we still enable S3 so the AWS SDK default provider chain can use
+// an EC2 instance role. Explicit keys, if provided, are picked up automatically.
+const hasPlaceholderCredentials =
+  process.env.AWS_ACCESS_KEY_ID === 'local_aws_access_key_not_configured' ||
+  process.env.AWS_SECRET_ACCESS_KEY === 'local_aws_secret_key_not_configured';
+
+const s3Enabled = Boolean(process.env.AWS_S3_BUCKET) && !hasPlaceholderCredentials;
 
 let client = null;
-if (hasAwsCredentials) {
+if (s3Enabled) {
+  // No explicit credentials passed: the SDK resolves them from env vars,
+  // the EC2 instance role (IMDS), or the rest of the default provider chain.
   client = new S3Client({ region: process.env.AWS_REGION || 'ap-south-1' });
 }
 
