@@ -115,8 +115,13 @@ async function main() {
       return `+9199${String(seq).padStart(8, '0')}`;
     };
 
+    let emailSeq = 0;
     for (const [empId, serial] of employees) {
-      const emailSafe = `${empId.toLowerCase().replace(/[^a-z0-9]/g, '')}@imported.local`;
+      // emp_id is unique; keep it in the local-part (dashes allowed in emails),
+      // plus a counter to guarantee uniqueness even if two ids normalize alike.
+      emailSeq += 1;
+      const localPart = empId.toLowerCase().replace(/[^a-z0-9.-]/g, '') || 'emp';
+      const emailSafe = `${localPart}.${emailSeq}@imported.local`;
       await sequelize.query(
         `INSERT INTO public.employees
            (emp_id, full_name, email, phone_number, designation, is_active, created_at, updated_at)
