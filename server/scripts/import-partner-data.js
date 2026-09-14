@@ -58,21 +58,26 @@ const CALL_DIRECTIONS = new Set(['INCOMING', 'OUTGOING', 'MISSED']);
 const CALL_CATEGORIES = new Set(['CLIENT', 'TEAM_MEMBER', 'PERSONAL', 'MISSED', 'PENDING']);
 
 async function main() {
-  // Confirm the staging schema exists and holds the partner tables.
-  const staged = await sequelize.query(
-    `SELECT table_name FROM information_schema.tables WHERE table_schema = :s`,
-    { replacements: { s: STAGING }, type: QueryTypes.SELECT },
-  );
-  const stagedNames = new Set(staged.map((r) => r.table_name));
+  // Confirm the staging schema holds each partner table. Use a COUNT probe so
+  // detection does not depend on how the driver names the returned column.
+  const stagingHas = async (table) => {
+    const rows = await sequelize.query(
+      `SELECT count(*)::int AS n FROM information_schema.tables
+        WHERE table_schema = :s AND table_name = :t`,
+      { replacements: { s: STAGING, t: table }, type: QueryTypes.SELECT },
+    );
+    return Number(rows?.[0]?.n) > 0;
+  };
+
   for (const t of ['call_logs', 'call_recordings']) {
-    if (!stagedNames.has(t)) {
+    if (!(await stagingHas(t))) {
       throw new Error(
         `Staging table "${STAGING}.${t}" not found. Load the partner dump into the "${STAGING}" schema first.`,
       );
     }
   }
 
-  const hasForm = stagedNames.has('call_form_data');
+  const hasForm = await stagingHas('call_form_data');
 
   await sequelize.transaction(async (tx) => {
     const opts = { transaction: tx };
