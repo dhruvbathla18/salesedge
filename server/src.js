@@ -35,8 +35,16 @@ const allowedOrigins = [
   'http://127.0.0.1:5175'
 ].filter(Boolean);
 
+// Normalize by stripping any trailing slash so "http://host/" and
+// "http://host" are treated as the same origin. Browsers never send a
+// trailing slash in the Origin header, but CLIENT_URL is easy to misconfigure.
+const stripTrailingSlash = (value) => (value ? value.replace(/\/+$/, '') : value);
+const normalizedAllowedOrigins = allowedOrigins.map(stripTrailingSlash);
+
 const isAllowedOrigin = (origin) =>
-  !origin || allowedOrigins.includes(origin) || /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+  !origin ||
+  normalizedAllowedOrigins.includes(stripTrailingSlash(origin)) ||
+  /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
 
 app.use(helmet());
 app.use(cors({
