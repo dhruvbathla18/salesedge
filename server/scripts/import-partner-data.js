@@ -276,5 +276,18 @@ async function main() {
 
 main().catch((err) => {
   console.error('❌ Import failed:', err.message);
+  if (err?.original) {
+    console.error('   pg message:', err.original.message);
+    console.error('   detail    :', err.original.detail);
+    console.error('   column    :', err.original.column);
+    console.error('   constraint:', err.original.constraint);
+    console.error('   table     :', err.original.table);
+  }
+  if (Array.isArray(err?.errors)) {
+    for (const e of err.errors) {
+      console.error('   validation:', e.path, '-', e.message, '(value:', e.value, ')');
+    }
+  }
+  console.error(err?.stack);
   process.exit(1);
 });
