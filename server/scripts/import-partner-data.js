@@ -194,9 +194,10 @@ async function main() {
     console.log(`📞 call_logs imported: ${logCount}`);
 
     // 4. Insert call_recordings (mapped), and flag their call_logs.
+    // Partner call_recordings has no updated_at; it has uploaded_at instead.
     const recs = await sequelize.query(
       `SELECT id, call_id, file_size_bytes, s3_bucket, s3_key, upload_status,
-              file_name, created_at, updated_at
+              file_name, created_at, uploaded_at
          FROM ${STAGING}.call_recordings`,
       { type: QueryTypes.SELECT, transaction: tx },
     );
@@ -226,7 +227,7 @@ async function main() {
             bucket: r.s3_bucket,
             key: r.s3_key,
             created: r.created_at,
-            updated: r.updated_at,
+            updated: r.uploaded_at || r.created_at,
           },
           transaction: tx,
         },
