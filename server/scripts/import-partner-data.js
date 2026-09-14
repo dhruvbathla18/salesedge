@@ -106,6 +106,15 @@ async function main() {
       if (!employees.has(empId)) employees.set(empId, serial);
     }
 
+    // Unique placeholder generators. phone_number, imei_1 and phone_number_1
+    // are UNIQUE columns, so every synthesized row needs a distinct value.
+    let seq = 0;
+    const uniquePhone = () => {
+      seq += 1;
+      // +9199 followed by a zero-padded counter keeps it valid E.164 (<=15 digits).
+      return `+9199${String(seq).padStart(8, '0')}`;
+    };
+
     for (const [empId, serial] of employees) {
       const emailSafe = `${empId.toLowerCase().replace(/[^a-z0-9]/g, '')}@imported.local`;
       await sequelize.query(
@@ -118,7 +127,7 @@ async function main() {
             emp_id: empId,
             full_name: empId,
             email: emailSafe,
-            phone: PLACEHOLDER_PHONE,
+            phone: uniquePhone(),
             designation: 'Imported',
           },
           transaction: tx,
@@ -136,7 +145,7 @@ async function main() {
             serial,
             emp_id: empId,
             imei: `IMEI-${serial}`,
-            phone: PLACEHOLDER_PHONE,
+            phone: uniquePhone(),
           },
           transaction: tx,
         },
