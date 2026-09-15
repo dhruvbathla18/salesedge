@@ -67,6 +67,7 @@ const nav = [
   ['Employees', '/employees', Users],
   ['Companies', '/companies', Building2],
   ['Calls', '/calls', PhoneCall],
+  ['Short Calls', '/short-calls', Clock],
   ['Recordings', '/recordings', Headphones],
   ['Reports', '/reports', ChartNoAxesCombined],
   ['Devices', '/devices', Smartphone],
@@ -1235,6 +1236,134 @@ function Reports() {
 }
 
 // ============================================================================
+// PAGE: SHORT CALLS
+// ============================================================================
+
+function ShortCalls() {
+  const [threshold, setThreshold] = useState(15);
+  const result = useData(`/employees/short-calls?threshold=${threshold}`);
+  const [search, setSearch] = useState('');
+
+  if (result.loading) {
+    return (
+      <Layout title="Short Calls" sub="Employees with unusually short calls">
+        <Loading />
+      </Layout>
+    );
+  }
+
+  if (result.error) {
+    return (
+      <Layout title="Short Calls" sub="Employees with unusually short calls">
+        <ErrorPanel message={result.error} />
+      </Layout>
+    );
+  }
+
+  const rows = (result.data?.data || []).filter((r) => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      (r.full_name || '').toLowerCase().includes(q) ||
+      (r.emp_id || '').toLowerCase().includes(q) ||
+      (r.phone_number || '').toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <Layout title="Short Calls" sub={`Employees with calls shorter than ${threshold} seconds`}>
+      <section className="filter-panel">
+        <div className="filter-header">
+          <div>
+            <h3>Short Call Report</h3>
+            <p>Employees ranked by number of calls under the threshold</p>
+          </div>
+          {search && (
+            <button type="button" className="filter-reset" onClick={() => setSearch('')}>
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="search-shell" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="search"
+            placeholder="Search employee, ID, or phone..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ flex: 1, minWidth: 220 }}
+          />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+            <span>Under (seconds)</span>
+            <select value={threshold} onChange={(e) => setThreshold(Number(e.target.value))}>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={15}>15</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="panel table-panel">
+        <div className="panel-title">
+          <div>
+            <h3>Flagged Employees</h3>
+            <p>Showing {rows.length} employees with calls under {threshold}s</p>
+          </div>
+        </div>
+
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Phone</th>
+                <th>Designation</th>
+                <th>Short Calls</th>
+                <th>Shortest</th>
+                <th>Total Calls</th>
+                <th>% Short</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const pct = r.total_calls > 0 ? Math.round((r.short_calls / r.total_calls) * 100) : 0;
+                return (
+                  <tr key={r.emp_id}>
+                    <td>
+                      <div>
+                        <b>{r.full_name}</b>
+                        <small>{r.emp_id}</small>
+                      </div>
+                    </td>
+                    <td>{r.phone_number || '-'}</td>
+                    <td>{r.designation || '-'}</td>
+                    <td><b>{r.short_calls}</b></td>
+                    <td>{r.shortest_seconds}s</td>
+                    <td>{r.total_calls}</td>
+                    <td>
+                      <Badge kind={pct >= 50 ? 'inactive' : 'active'}>{pct}%</Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                    No employees with calls under {threshold} seconds
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </Layout>
+  );
+}
+
+// ============================================================================
 // PAGE: DEVICES
 // ============================================================================
 
@@ -1598,6 +1727,7 @@ function App() {
             <Route path="/employees" element={<Employees />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/calls" element={<Calls />} />
+            <Route path="/short-calls" element={<ShortCalls />} />
             <Route path="/recordings" element={<Recordings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/devices" element={<Devices />} />
