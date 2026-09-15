@@ -21,21 +21,30 @@ import { Employee, Device, CallLog } from '../models/index.js';
 
 const APPLY = process.argv.includes('--apply');
 
-// Seed fixtures use zero-padded IDs like EMP-0001 .. EMP-0012 (dash + 4 digits).
+// Original demo/seed fixtures use zero-padded IDs EMP-0001 .. EMP-0012 with
+// real-looking @mistavinya.com emails. They are NOT in the HR directory and
+// carry no real calls. We target this exact pattern, still guarded by 0-calls
+// so nothing with any activity can ever be deleted.
 const SEED_PATTERN = /^EMP-\d{4}$/;
 
 async function main() {
   const all = await Employee.findAll({ attributes: ['emp_id', 'full_name', 'email'], raw: true });
 
   const toDelete = [];
+  const kept = [];
   for (const e of all) {
-    const isPlaceholderEmail = String(e.email).endsWith('@imported.local');
     const matchesSeed = SEED_PATTERN.test(e.emp_id);
-    if (!matchesSeed || !isPlaceholderEmail) continue; // must be seed-format AND never HR-updated
+    if (!matchesSeed) continue; // only ever consider the EMP-000N seed format
     const calls = await CallLog.count({ where: { employee_id: e.emp_id } });
     if (calls === 0) {
       toDelete.push(e.emp_id);
+    } else {
+      kept.push(`${e.emp_id} (calls=${calls})`);
     }
+  }
+
+  if (kept.length) {
+    console.log(`Kept (seed-format but has calls, NOT deleted): ${kept.join(', ')}`);
   }
 
   console.log(`Candidates for deletion (${toDelete.length}):`);
