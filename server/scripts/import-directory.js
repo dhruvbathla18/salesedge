@@ -108,7 +108,17 @@ async function main() {
   };
 
   const dataLines = lines.slice(headerIdx + 1);
-  const report = { updatedEmployees: 0, updatedDevices: 0, missingPhone: [], missingImei: [], skipped: [] };
+  const report = {
+    updatedEmployees: 0, updatedDevices: 0,
+    missingPhone: [], missingImei: [],
+    dupPhone: [], dupEmail: [], dupImei: [], skipped: [],
+  };
+
+  // Track values already used in this run so within-file duplicates get a
+  // unique placeholder instead of violating the DB's unique constraints.
+  const seenPhones = new Set();
+  const seenEmails = new Set();
+  const seenImeis = new Set();
 
   await sequelize.transaction(async (tx) => {
     for (const line of dataLines) {
@@ -117,14 +127,26 @@ async function main() {
       if (!empId) { continue; }
 
       const fullName = [clean(cells[idx.first]), clean(cells[idx.last])].filter(Boolean).join(' ') || empId;
-      const email = clean(cells[idx.email]) || `${empId.toLowerCase()}@imported.local`;
+
+      let email = (clean(cells[idx.email]) || `${empId.toLowerCase()}@imported.local`).toLowerCase();
+      if (seenEmails.has(email)) { report.dupEmail.push(empId); email = `${empId.toLowerCase()}.${report.dupEmail.length}@imported.local`; }
+      seenEmails.add(email);
+
       const designation = clean(cells[idx.dept]) || 'Sales';
+
       let phone = toE164(cells[idx.mobile]);
       if (!phone) { phone = uniquePlaceholderPhone(); report.missingPhone.push(empId); }
+      else if (seenPhones.has(phone)) { report.dupPhone.push(empId); phone = uniquePlaceholderPhone(); }
+      seenPhones.add(phone);
 
-      const [imei1raw, imei2] = parseImeis(cells[idx.imei]);
-      const imei1 = imei1raw || placeholderImei(empId);
+      const [imei1raw, imei2raw] = parseImeis(cells[idx.imei]);
+      let imei1 = imei1raw || placeholderImei(empId);
       if (!imei1raw) report.missingImei.push(empId);
+      else if (seenImeis.has(imei1)) { report.dupImei.push(empId); imei1 = placeholderImei(empId); }
+      seenImeis.add(imei1);
+      // Keep imei_2 only if present and not colliding; otherwise drop it.
+      let imei2 = imei2raw && !seenImeis.has(imei2raw) ? imei2raw : null;
+      if (imei2) seenImeis.add(imei2);
 
       const issued = clean(cells[idx.issued]).toLowerCase();
       const isActive = issued === '' ? true : issued === 'yes' || issued === 'y' || issued === 'true';
@@ -178,6 +200,15 @@ async function main() {
   }
   if (report.missingImei.length) {
     console.log(`⚠️  Missing IMEI (placeholder used) for: ${report.missingImei.join(', ')}`);
+  }
+  if (report.dupPhone.length) {
+    console.log(`⚠️  Duplicate phone in file (placeholder used) for: ${report.dupPhone.join(', ')}`);
+  }
+  if (report.dupEmail.length) {
+    console.log(`⚠️  Duplicate email in file (placeholder used) for: ${report.dupEmail.join(', ')}`);
+  }
+  if (report.dupImei.length) {
+    console.log(`⚠️  Duplicate IMEI in file (placeholder used) for: ${report.dupImei.join(', ')}`);
   }
   await sequelize.close();
   process.exit(0);
