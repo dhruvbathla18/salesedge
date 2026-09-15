@@ -270,6 +270,85 @@ export const devices = ({ req, res }) => {
 };
 
 /**
+ * GET /api/employees/short-calls
+ *
+ * Employees who have short calls (duration below a threshold, default 15s).
+ * Returns each employee with their short-call count and their total calls,
+ * ordered by the most short calls first. Optional filters: threshold, from, to.
+ */
+export const shortCallEmployees = async (req, res) => {
+  try {
+    const { threshold = 15, from, to } = req.query;
+    const seconds = Math.max(1, parseInt(threshold, 10) || 15);
+
+    const dateWhere = {};
+    if (from || to) {
+      dateWhere.created_at = {};
+      if (from) dateWhere.created_at[Op.gte] = new Date(from);
+      if (to) dateWhere.created_at[Op.lte] = new Date(to);
+    }
+
+    // Count short calls per employee.
+    const shortRows = await CallLog.findAll({
+      attributes: [
+        'employee_id',
+        [fn('COUNT', col('id')), 'short_calls'],
+        [fn('MIN', col('duration_seconds')), 'shortest_seconds'],
+      ],
+      where: {
+        ...dateWhere,
+        duration_seconds: { [Op.lt]: seconds },
+      },
+      group: ['employee_id'],
+      order: [[fn('COUNT', col('id')), 'DESC']],
+      raw: true,
+    });
+
+    if (shortRows.length === 0) {
+      return res.json({ threshold: seconds, total: 0, data: [] });
+    }
+
+    const empIds = shortRows.map((r) => r.employee_id);
+
+    // Total calls per employee (for context), and employee details.
+    const totalRows = await CallLog.findAll({
+      attributes: ['employee_id', [fn('COUNT', col('id')), 'total_calls']],
+      where: { employee_id: empIds },
+      group: ['employee_id'],
+      raw: true,
+    });
+    const totalMap = new Map(totalRows.map((r) => [r.employee_id, Number(r.total_calls)]));
+
+    const emps = await Employee.findAll({
+      where: { emp_id: empIds },
+      attributes: ['emp_id', 'full_name', 'email', 'phone_number', 'designation', 'is_active'],
+      raw: true,
+    });
+    const empMap = new Map(emps.map((e) => [e.emp_id, e]));
+
+    const data = shortRows.map((r) => {
+      const emp = empMap.get(r.employee_id) || {};
+      return {
+        emp_id: r.employee_id,
+        full_name: emp.full_name || r.employee_id,
+        email: emp.email || null,
+        phone_number: emp.phone_number || null,
+        designation: emp.designation || null,
+        is_active: emp.is_active ?? null,
+        short_calls: Number(r.short_calls),
+        shortest_seconds: Number(r.shortest_seconds),
+        total_calls: totalMap.get(r.employee_id) || Number(r.short_calls),
+      };
+    });
+
+    return res.json({ threshold: seconds, total: data.length, data });
+  } catch (error) {
+    console.error('Short-call employees error:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+/**
  * GET /api/calls
  */
 export const calls = async (req, res) => {
@@ -284,6 +363,8 @@ export const calls = async (req, res) => {
       company,
       from,
       to,
+      maxDuration,
+      minDuration,
       q,
       page = 1,
       limit = 50,
@@ -307,6 +388,15 @@ export const calls = async (req, res) => {
       where.createdAt = {};
       if (from) where.createdAt[Op.gte] = new Date(from);
       if (to) where.createdAt[Op.lte] = new Date(to);
+    }
+
+    // Duration filters (seconds). e.g. maxDuration=15 -> calls shorter than 15s.
+    const maxDur = maxDuration !== undefined ? parseInt(maxDuration, 10) : null;
+    const minDur = minDuration !== undefined ? parseInt(minDuration, 10) : null;
+    if (Number.isInteger(maxDur) || Number.isInteger(minDur)) {
+      where.duration_seconds = {};
+      if (Number.isInteger(minDur)) where.duration_seconds[Op.gte] = minDur;
+      if (Number.isInteger(maxDur)) where.duration_seconds[Op.lt] = maxDur;
     }
 
     if (recordingStatus) {

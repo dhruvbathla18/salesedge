@@ -34,6 +34,7 @@ r.use(protect);
 r.get('/dashboard', log('VIEW', 'SYSTEM'), c.dashboard);
 
 // Employees
+r.get('/employees/short-calls', log('VIEW', 'EMPLOYEE'), c.shortCallEmployees);
 r.get('/employees', log('VIEW', 'EMPLOYEE'), (req, res) => c.employees({ req, res }));
 
 // Companies
