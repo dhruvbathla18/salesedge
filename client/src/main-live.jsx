@@ -67,7 +67,7 @@ const nav = [
   ['Employees', '/employees', Users],
   ['Companies', '/companies', Building2],
   ['Calls', '/calls', PhoneCall],
-  ['Short Calls', '/short-calls', Clock],
+  ['Duration Filter', '/duration-filter', Clock],
   ['Recordings', '/recordings', Headphones],
   ['Reports', '/reports', ChartNoAxesCombined],
   ['Devices', '/devices', Smartphone],
@@ -1236,129 +1236,120 @@ function Reports() {
 }
 
 // ============================================================================
-// PAGE: SHORT CALLS
+// PAGE: DURATION FILTER
 // ============================================================================
 
-function ShortCalls() {
-  const [threshold, setThreshold] = useState(15);
-  const result = useData(`/employees/short-calls?threshold=${threshold}`);
-  const [search, setSearch] = useState('');
+function DurationFilter() {
+  const [op, setOp] = useState('lt');        // lt = less than, gt = greater than, between
+  const [value, setValue] = useState('60');   // primary value
+  const [value2, setValue2] = useState('300'); // upper bound for "between"
+  const [unit, setUnit] = useState('sec');    // sec | min
+  const [applied, setApplied] = useState({ op: 'lt', value: '60', value2: '300', unit: 'sec' });
 
-  if (result.loading) {
-    return (
-      <Layout title="Short Calls" sub="Employees with unusually short calls">
-        <Loading />
-      </Layout>
-    );
+  const toSeconds = (v) => {
+    const n = parseInt(v, 10);
+    if (!Number.isFinite(n)) return null;
+    return applied.unit === 'min' ? n * 60 : n;
+  };
+
+  // Build the /calls query from the APPLIED filter.
+  const params = new URLSearchParams();
+  params.set('limit', '200');
+  const v1 = (() => { const n = parseInt(applied.value, 10); return Number.isFinite(n) ? (applied.unit === 'min' ? n * 60 : n) : null; })();
+  const v2 = (() => { const n = parseInt(applied.value2, 10); return Number.isFinite(n) ? (applied.unit === 'min' ? n * 60 : n) : null; })();
+
+  if (applied.op === 'lt' && v1 != null) params.set('maxDuration', String(v1));
+  else if (applied.op === 'gt' && v1 != null) params.set('minDuration', String(v1 + 1)); // strictly greater than
+  else if (applied.op === 'between' && v1 != null && v2 != null) {
+    params.set('minDuration', String(Math.min(v1, v2)));
+    params.set('maxDuration', String(Math.max(v1, v2) + 1)); // inclusive upper bound
   }
 
-  if (result.error) {
-    return (
-      <Layout title="Short Calls" sub="Employees with unusually short calls">
-        <ErrorPanel message={result.error} />
-      </Layout>
-    );
-  }
+  const result = useData(`/calls?${params.toString()}`);
 
-  const rows = (result.data?.data || []).filter((r) => {
-    const q = search.toLowerCase();
-    if (!q) return true;
-    return (
-      (r.full_name || '').toLowerCase().includes(q) ||
-      (r.emp_id || '').toLowerCase().includes(q) ||
-      (r.phone_number || '').toLowerCase().includes(q)
-    );
-  });
+  const apply = () => setApplied({ op, value, value2, unit });
+
+  const describe = () => {
+    const u = applied.unit === 'min' ? 'min' : 'sec';
+    if (applied.op === 'lt') return `Calls shorter than ${applied.value} ${u}`;
+    if (applied.op === 'gt') return `Calls longer than ${applied.value} ${u}`;
+    return `Calls between ${applied.value} and ${applied.value2} ${u}`;
+  };
+
+  const calls = result.data?.data || [];
 
   return (
-    <Layout title="Short Calls" sub={`Employees with calls shorter than ${threshold} seconds`}>
+    <Layout title="Duration Filter" sub="Find calls by duration — less than, greater than, or between">
       <section className="filter-panel">
         <div className="filter-header">
           <div>
-            <h3>Short Call Report</h3>
-            <p>Employees ranked by number of calls under the threshold</p>
+            <h3>Call Duration Filter</h3>
+            <p>Choose a condition and value (seconds or minutes), then apply</p>
           </div>
-          {search && (
-            <button type="button" className="filter-reset" onClick={() => setSearch('')}>
-              Clear
-            </button>
-          )}
         </div>
-        <div className="search-shell" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <input
-            type="search"
-            placeholder="Search employee, ID, or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ flex: 1, minWidth: 220 }}
-          />
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-            <span>Under (seconds)</span>
-            <select value={threshold} onChange={(e) => setThreshold(Number(e.target.value))}>
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
+
+        <div className="filter-grid">
+          <label className="field-inline">
+            <span>Condition</span>
+            <select value={op} onChange={(e) => setOp(e.target.value)}>
+              <option value="lt">Less than</option>
+              <option value="gt">Greater than</option>
+              <option value="between">Between</option>
             </select>
+          </label>
+
+          <label className="field-inline">
+            <span>{op === 'between' ? 'From' : 'Value'}</span>
+            <input
+              type="number"
+              min="0"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="e.g. 60"
+            />
+          </label>
+
+          {op === 'between' && (
+            <label className="field-inline">
+              <span>To</span>
+              <input
+                type="number"
+                min="0"
+                value={value2}
+                onChange={(e) => setValue2(e.target.value)}
+                placeholder="e.g. 300"
+              />
+            </label>
+          )}
+
+          <label className="field-inline">
+            <span>Unit</span>
+            <select value={unit} onChange={(e) => setUnit(e.target.value)}>
+              <option value="sec">Seconds</option>
+              <option value="min">Minutes</option>
+            </select>
+          </label>
+
+          <label className="field-inline" style={{ alignSelf: 'end' }}>
+            <span>&nbsp;</span>
+            <button type="button" className="primary" onClick={apply}>Apply Filter</button>
           </label>
         </div>
       </section>
 
-      <section className="panel table-panel">
-        <div className="panel-title">
-          <div>
-            <h3>Flagged Employees</h3>
-            <p>Showing {rows.length} employees with calls under {threshold}s</p>
-          </div>
-        </div>
-
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Phone</th>
-                <th>Designation</th>
-                <th>Short Calls</th>
-                <th>Shortest</th>
-                <th>Total Calls</th>
-                <th>% Short</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const pct = r.total_calls > 0 ? Math.round((r.short_calls / r.total_calls) * 100) : 0;
-                return (
-                  <tr key={r.emp_id}>
-                    <td>
-                      <div>
-                        <b>{r.full_name}</b>
-                        <small>{r.emp_id}</small>
-                      </div>
-                    </td>
-                    <td>{r.phone_number || '-'}</td>
-                    <td>{r.designation || '-'}</td>
-                    <td><b>{r.short_calls}</b></td>
-                    <td>{r.shortest_seconds}s</td>
-                    <td>{r.total_calls}</td>
-                    <td>
-                      <Badge kind={pct >= 50 ? 'inactive' : 'active'}>{pct}%</Badge>
-                    </td>
-                  </tr>
-                );
-              })}
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>
-                    No employees with calls under {threshold} seconds
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {result.loading ? (
+        <Loading />
+      ) : result.error ? (
+        <ErrorPanel message={result.error} />
+      ) : (
+        <>
+          <section className="panel" style={{ padding: '16px 20px' }}>
+            <h3 style={{ margin: 0 }}>{describe()}</h3>
+            <p style={{ margin: '4px 0 0', color: '#64748b' }}>Showing {calls.length} matching calls</p>
+          </section>
+          <CallsTable calls={calls} />
+        </>
+      )}
     </Layout>
   );
 }
@@ -1727,7 +1718,7 @@ function App() {
             <Route path="/employees" element={<Employees />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/calls" element={<Calls />} />
-            <Route path="/short-calls" element={<ShortCalls />} />
+            <Route path="/duration-filter" element={<DurationFilter />} />
             <Route path="/recordings" element={<Recordings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/devices" element={<Devices />} />
