@@ -67,7 +67,6 @@ const nav = [
   ['Employees', '/employees', Users],
   ['Companies', '/companies', Building2],
   ['Calls', '/calls', PhoneCall],
-  ['Duration Filter', '/duration-filter', Clock],
   ['Recordings', '/recordings', Headphones],
   ['Reports', '/reports', ChartNoAxesCombined],
   ['Devices', '/devices', Smartphone],
@@ -886,17 +885,37 @@ function Calls() {
     company: '',
     from: '',
     to: '',
-    q: ''
+    q: '',
+    durationOp: '',     // '', 'lt', 'gt', 'between'
+    durationValue: '',
+    durationValue2: '',
+    durationUnit: 'sec' // 'sec' | 'min'
   });
 
   const queryParams = new URLSearchParams();
-  Object.entries(filters).forEach(([k, v]) => {
-    if (v) queryParams.set(k, v);
+  const passthrough = ['direction', 'category', 'recordingStatus', 'company', 'from', 'to', 'q'];
+  passthrough.forEach((k) => {
+    if (filters[k]) queryParams.set(k, filters[k]);
   });
-  queryParams.set('limit', '100');
+
+  // Translate the duration filter into min/max seconds.
+  const mul = filters.durationUnit === 'min' ? 60 : 1;
+  const dv1 = parseInt(filters.durationValue, 10);
+  const dv2 = parseInt(filters.durationValue2, 10);
+  if (filters.durationOp === 'lt' && Number.isFinite(dv1)) {
+    queryParams.set('maxDuration', String(dv1 * mul));
+  } else if (filters.durationOp === 'gt' && Number.isFinite(dv1)) {
+    queryParams.set('minDuration', String(dv1 * mul + 1)); // strictly greater than
+  } else if (filters.durationOp === 'between' && Number.isFinite(dv1) && Number.isFinite(dv2)) {
+    queryParams.set('minDuration', String(Math.min(dv1, dv2) * mul));
+    queryParams.set('maxDuration', String(Math.max(dv1, dv2) * mul + 1)); // inclusive upper
+  }
+
+  queryParams.set('limit', '200');
 
   const result = useData(`/calls?${queryParams.toString()}`);
-  const hasActiveFilters = Object.values(filters).some(Boolean);
+  const hasActiveFilters =
+    passthrough.some((k) => filters[k]) || (filters.durationOp && filters.durationValue);
 
   if (result.loading) {
     return (
@@ -937,7 +956,11 @@ function Calls() {
                   company: '',
                   from: '',
                   to: '',
-                  q: ''
+                  q: '',
+                  durationOp: '',
+                  durationValue: '',
+                  durationValue2: '',
+                  durationUnit: 'sec'
                 })
               }
             >
@@ -997,6 +1020,58 @@ function Calls() {
               <option value="PENDING">Pending</option>
             </select>
           </label>
+
+          <label className="field-inline">
+            <span>Duration</span>
+            <select
+              value={filters.durationOp}
+              onChange={(e) => setFilters({ ...filters, durationOp: e.target.value })}
+            >
+              <option value="">Any Duration</option>
+              <option value="lt">Less than</option>
+              <option value="gt">Greater than</option>
+              <option value="between">Between</option>
+            </select>
+          </label>
+
+          {filters.durationOp && (
+            <label className="field-inline">
+              <span>{filters.durationOp === 'between' ? 'From value' : 'Value'}</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 60"
+                value={filters.durationValue}
+                onChange={(e) => setFilters({ ...filters, durationValue: e.target.value })}
+              />
+            </label>
+          )}
+
+          {filters.durationOp === 'between' && (
+            <label className="field-inline">
+              <span>To value</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 300"
+                value={filters.durationValue2}
+                onChange={(e) => setFilters({ ...filters, durationValue2: e.target.value })}
+              />
+            </label>
+          )}
+
+          {filters.durationOp && (
+            <label className="field-inline">
+              <span>Unit</span>
+              <select
+                value={filters.durationUnit}
+                onChange={(e) => setFilters({ ...filters, durationUnit: e.target.value })}
+              >
+                <option value="sec">Seconds</option>
+                <option value="min">Minutes</option>
+              </select>
+            </label>
+          )}
 
           <label className="field-inline">
             <span>From Date</span>
@@ -1231,125 +1306,6 @@ function Reports() {
       </section>
 
       <CallsTable calls={calls} />
-    </Layout>
-  );
-}
-
-// ============================================================================
-// PAGE: DURATION FILTER
-// ============================================================================
-
-function DurationFilter() {
-  const [op, setOp] = useState('lt');        // lt = less than, gt = greater than, between
-  const [value, setValue] = useState('60');   // primary value
-  const [value2, setValue2] = useState('300'); // upper bound for "between"
-  const [unit, setUnit] = useState('sec');    // sec | min
-  const [applied, setApplied] = useState({ op: 'lt', value: '60', value2: '300', unit: 'sec' });
-
-  const toSeconds = (v) => {
-    const n = parseInt(v, 10);
-    if (!Number.isFinite(n)) return null;
-    return applied.unit === 'min' ? n * 60 : n;
-  };
-
-  // Build the /calls query from the APPLIED filter.
-  const params = new URLSearchParams();
-  params.set('limit', '200');
-  const v1 = (() => { const n = parseInt(applied.value, 10); return Number.isFinite(n) ? (applied.unit === 'min' ? n * 60 : n) : null; })();
-  const v2 = (() => { const n = parseInt(applied.value2, 10); return Number.isFinite(n) ? (applied.unit === 'min' ? n * 60 : n) : null; })();
-
-  if (applied.op === 'lt' && v1 != null) params.set('maxDuration', String(v1));
-  else if (applied.op === 'gt' && v1 != null) params.set('minDuration', String(v1 + 1)); // strictly greater than
-  else if (applied.op === 'between' && v1 != null && v2 != null) {
-    params.set('minDuration', String(Math.min(v1, v2)));
-    params.set('maxDuration', String(Math.max(v1, v2) + 1)); // inclusive upper bound
-  }
-
-  const result = useData(`/calls?${params.toString()}`);
-
-  const apply = () => setApplied({ op, value, value2, unit });
-
-  const describe = () => {
-    const u = applied.unit === 'min' ? 'min' : 'sec';
-    if (applied.op === 'lt') return `Calls shorter than ${applied.value} ${u}`;
-    if (applied.op === 'gt') return `Calls longer than ${applied.value} ${u}`;
-    return `Calls between ${applied.value} and ${applied.value2} ${u}`;
-  };
-
-  const calls = result.data?.data || [];
-
-  return (
-    <Layout title="Duration Filter" sub="Find calls by duration — less than, greater than, or between">
-      <section className="filter-panel">
-        <div className="filter-header">
-          <div>
-            <h3>Call Duration Filter</h3>
-            <p>Choose a condition and value (seconds or minutes), then apply</p>
-          </div>
-        </div>
-
-        <div className="filter-grid">
-          <label className="field-inline">
-            <span>Condition</span>
-            <select value={op} onChange={(e) => setOp(e.target.value)}>
-              <option value="lt">Less than</option>
-              <option value="gt">Greater than</option>
-              <option value="between">Between</option>
-            </select>
-          </label>
-
-          <label className="field-inline">
-            <span>{op === 'between' ? 'From' : 'Value'}</span>
-            <input
-              type="number"
-              min="0"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="e.g. 60"
-            />
-          </label>
-
-          {op === 'between' && (
-            <label className="field-inline">
-              <span>To</span>
-              <input
-                type="number"
-                min="0"
-                value={value2}
-                onChange={(e) => setValue2(e.target.value)}
-                placeholder="e.g. 300"
-              />
-            </label>
-          )}
-
-          <label className="field-inline">
-            <span>Unit</span>
-            <select value={unit} onChange={(e) => setUnit(e.target.value)}>
-              <option value="sec">Seconds</option>
-              <option value="min">Minutes</option>
-            </select>
-          </label>
-
-          <label className="field-inline" style={{ alignSelf: 'end' }}>
-            <span>&nbsp;</span>
-            <button type="button" className="primary" onClick={apply}>Apply Filter</button>
-          </label>
-        </div>
-      </section>
-
-      {result.loading ? (
-        <Loading />
-      ) : result.error ? (
-        <ErrorPanel message={result.error} />
-      ) : (
-        <>
-          <section className="panel" style={{ padding: '16px 20px' }}>
-            <h3 style={{ margin: 0 }}>{describe()}</h3>
-            <p style={{ margin: '4px 0 0', color: '#64748b' }}>Showing {calls.length} matching calls</p>
-          </section>
-          <CallsTable calls={calls} />
-        </>
-      )}
     </Layout>
   );
 }
@@ -1718,7 +1674,6 @@ function App() {
             <Route path="/employees" element={<Employees />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/calls" element={<Calls />} />
-            <Route path="/duration-filter" element={<DurationFilter />} />
             <Route path="/recordings" element={<Recordings />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/devices" element={<Devices />} />
