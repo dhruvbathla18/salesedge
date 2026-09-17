@@ -169,52 +169,71 @@ export const CallLog = sequelize.define('CallLog', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  // Maps to the partner schema column serial_number.
   device_serial: {
     type: DataTypes.STRING(50),
-    allowNull: false,
+    field: 'serial_number',
+    allowNull: true,
   },
+  // Maps to the partner schema column emp_id.
   employee_id: {
     type: DataTypes.STRING(50),
+    field: 'emp_id',
     allowNull: false,
   },
+  // Partner schema uses call_type (VARCHAR, values INCOMING/OUTGOING/MISSED).
   call_direction: {
-    type: DataTypes.ENUM('INCOMING', 'OUTGOING', 'MISSED'),
+    type: DataTypes.STRING(20),
+    field: 'call_type',
     allowNull: false,
   },
   caller_number: {
-    type: DataTypes.STRING(20), // E.164 format
-    allowNull: false,
+    type: DataTypes.STRING(30),
+    allowNull: true,
   },
+  // Partner schema uses receiver_number.
   callee_number: {
-    type: DataTypes.STRING(20),
-    allowNull: false,
+    type: DataTypes.STRING(30),
+    field: 'receiver_number',
+    allowNull: true,
   },
   duration_seconds: {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
   call_category: {
-    type: DataTypes.ENUM('CLIENT', 'TEAM_MEMBER', 'PERSONAL', 'MISSED', 'PENDING'),
+    type: DataTypes.STRING(20),
     defaultValue: 'PENDING',
   },
+  // These columns do not exist in the partner schema; expose them as VIRTUAL
+  // so existing controllers/UI keep working. Recording presence is derived
+  // from the associated recording when loaded.
   is_form_required: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    type: DataTypes.VIRTUAL,
+    get() { return false; },
   },
   is_form_submitted: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    type: DataTypes.VIRTUAL,
+    get() {
+      const form = this.get('callForm');
+      return !!form;
+    },
   },
   has_recording: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    type: DataTypes.VIRTUAL,
+    get() {
+      const rec = this.get('recording');
+      return !!rec;
+    },
   },
 }, {
   tableName: 'call_logs',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   indexes: [
-    { fields: ['employee_id'] },
-    { fields: ['device_serial'] },
+    { fields: ['emp_id'] },
+    { fields: ['serial_number'] },
     { fields: ['call_category'] },
     { fields: ['created_at'] },
   ],
@@ -230,22 +249,24 @@ export const CallFormData = sequelize.define('CallFormData', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  // Partner schema uses call_id.
   call_log_id: {
     type: DataTypes.UUID,
+    field: 'call_id',
     allowNull: false,
     unique: true,
   },
   company_name: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING(200),
     allowNull: false,
   },
   customer_name: {
-    type: DataTypes.STRING(255),
+    type: DataTypes.STRING(200),
     allowNull: false,
   },
   reason_for_call: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+    type: DataTypes.STRING(500),
+    allowNull: true,
   },
   notes: {
     type: DataTypes.TEXT,
@@ -254,8 +275,10 @@ export const CallFormData = sequelize.define('CallFormData', {
 }, {
   tableName: 'call_form_data',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   indexes: [
-    { fields: ['call_log_id'] },
+    { fields: ['call_id'] },
     { fields: ['company_name'] },
   ],
 });
@@ -270,56 +293,56 @@ export const CallRecording = sequelize.define('CallRecording', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
   },
+  // Partner schema uses call_id.
   call_log_id: {
     type: DataTypes.UUID,
+    field: 'call_id',
     allowNull: false,
     unique: true,
   },
+  // device_serial is not in the partner recordings table; VIRTUAL for compatibility.
   device_serial: {
-    type: DataTypes.STRING(50),
-    allowNull: false,
+    type: DataTypes.VIRTUAL,
+    get() { return this.get('callLog')?.device_serial || null; },
   },
-  local_file_path: {
-    type: DataTypes.STRING(500),
-    allowNull: true, // Null after S3 upload
+  file_name: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+  content_type: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
   },
   file_size_bytes: {
     type: DataTypes.BIGINT,
-    allowNull: false,
+    allowNull: true,
   },
   s3_bucket: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
+    type: DataTypes.STRING(100),
+    allowNull: true,
   },
   s3_key: {
     type: DataTypes.STRING(500),
     allowNull: false,
   },
+  // Partner schema stores this as a plain VARCHAR (e.g. 'UPLOADED'),
+  // not the portal's ENUM.
   upload_status: {
-    type: DataTypes.ENUM('PENDING', 'UPLOADING', 'COMPLETED', 'FAILED', 'RETRY_SCHEDULED'),
+    type: DataTypes.STRING(20),
     defaultValue: 'PENDING',
   },
-  retry_count: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  max_retries: {
-    type: DataTypes.INTEGER,
-    defaultValue: 3,
-  },
-  next_retry_at: {
+  uploaded_at: {
     type: DataTypes.DATE,
-    allowNull: true,
-  },
-  error_message: {
-    type: DataTypes.TEXT,
     allowNull: true,
   },
 }, {
   tableName: 'call_recordings',
+  // Partner recordings table has created_at but no updated_at.
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: false,
   indexes: [
-    { fields: ['call_log_id'] },
+    { fields: ['call_id'] },
     { fields: ['upload_status'] },
   ],
 });
