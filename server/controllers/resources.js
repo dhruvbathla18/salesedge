@@ -483,13 +483,16 @@ export const call = async (req, res) => {
  * GET /api/recordings
  */
 export const recordings = ({ req, res }) => {
+  // Partner recordings have no device column; device info is reached via callLog.
   return paginate(CallRecording, req, res, {}, [
     {
       association: 'callLog',
-      attributes: ['id', 'call_direction', 'duration_seconds', 'call_category', 'createdAt'],
-      include: [{ association: 'employee', attributes: ['emp_id', 'full_name'] }],
+      attributes: ['id', 'device_serial', 'call_direction', 'duration_seconds', 'call_category', 'createdAt'],
+      include: [
+        { association: 'employee', attributes: ['emp_id', 'full_name'] },
+        { association: 'device', attributes: ['serial_number', 'phone_number_1'] },
+      ],
     },
-    { association: 'device', attributes: ['serial_number', 'phone_number_1'] },
   ], [['createdAt', 'DESC']]);
 };
 

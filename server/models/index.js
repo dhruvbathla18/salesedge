@@ -431,9 +431,9 @@ CallFormData.belongsTo(CallLog, { foreignKey: 'call_log_id', as: 'callLog', cons
 CallLog.hasOne(CallRecording, { foreignKey: 'call_log_id', as: 'recording', constraints: false });
 CallRecording.belongsTo(CallLog, { foreignKey: 'call_log_id', as: 'callLog', constraints: false });
 
-// Device 1:N Recordings
-Device.hasMany(CallRecording, { foreignKey: 'device_serial', as: 'recordings', constraints: false });
-CallRecording.belongsTo(Device, { foreignKey: 'device_serial', as: 'device', constraints: false });
+// NOTE: the partner call_recordings table has no device_serial column, so there
+// is no direct Device<->CallRecording association. The device for a recording is
+// reached via its callLog (CallRecording -> callLog -> device).
 
 // ============================================================================
 // EXPORT ALL MODELS
