@@ -1565,8 +1565,8 @@ function SettingsPage() {
 function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@mistavinya.local');
-  const [password, setPassword] = useState('Admin@12345');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -1596,13 +1596,15 @@ function Login() {
         <h1>Sign In</h1>
         <p>Access the PostgreSQL Sales Intelligence Portal</p>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <label>
             Admin Email
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              autoComplete="off"
               required
             />
           </label>
@@ -1613,6 +1615,8 @@ function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              autoComplete="new-password"
               required
             />
           </label>
@@ -1623,12 +1627,6 @@ function Login() {
             {loading ? 'Signing in…' : 'Sign In to Portal'}
           </button>
         </form>
-
-        <div className="login-hint">
-          <b>Test Admin Credentials:</b>
-          <div>Email: <code>admin@mistavinya.local</code></div>
-          <div>Password: <code>Admin@12345</code></div>
-        </div>
       </div>
     </div>
   );
