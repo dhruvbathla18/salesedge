@@ -413,6 +413,10 @@ export const calls = async (req, res) => {
         { callee_number: { [Op.iLike]: `%${q}%` } },
         { employee_id: { [Op.iLike]: `%${q}%` } },
         { device_serial: { [Op.iLike]: `%${q}%` } },
+        // Search the joined employee's name and email too. The
+        // $association.column$ syntax references the included Employee table.
+        { '$employee.full_name$': { [Op.iLike]: `%${q}%` } },
+        { '$employee.email$': { [Op.iLike]: `%${q}%` } },
       ];
     }
 
@@ -432,6 +436,9 @@ export const calls = async (req, res) => {
       limit: pageSize,
       offset: (pageNum - 1) * pageSize,
       order: [['createdAt', 'DESC']],
+      // subQuery:false is required so the $employee.full_name$ reference in the
+      // WHERE clause resolves against the joined table rather than a subquery.
+      subQuery: false,
       distinct: true,
     });
 

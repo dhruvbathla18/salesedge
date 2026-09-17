@@ -974,7 +974,7 @@ function Calls() {
             <span>Search Text</span>
             <input
               type="search"
-              placeholder="Number, ID, serial..."
+              placeholder="Employee name, ID, number, serial..."
               value={filters.q}
               onChange={(e) => setFilters({ ...filters, q: e.target.value })}
             />
