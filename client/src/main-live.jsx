@@ -1597,14 +1597,25 @@ function Login() {
         <p>Access the PostgreSQL Sales Intelligence Portal</p>
 
         <form onSubmit={handleSubmit} autoComplete="off">
+          {/* Hidden decoy fields absorb the browser's autofill attempt so the
+              real fields below stay empty. */}
+          <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+          <input type="password" name="password" autoComplete="current-password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+
           <label>
             Admin Email
             <input
               type="email"
+              name="login_id"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              readOnly
+              onFocus={(e) => e.target.removeAttribute('readonly')}
               required
             />
           </label>
@@ -1613,10 +1624,13 @@ function Login() {
             Password
             <input
               type="password"
+              name="login_secret"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               autoComplete="new-password"
+              readOnly
+              onFocus={(e) => e.target.removeAttribute('readonly')}
               required
             />
           </label>
