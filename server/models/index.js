@@ -42,6 +42,7 @@ export const User = sequelize.define('User', {
 }, {
   tableName: 'users',
   timestamps: true,
+  underscored: true,
   indexes: [
     { fields: ['email'] },
     { fields: ['is_active'] },
@@ -84,6 +85,7 @@ export const Employee = sequelize.define('Employee', {
 }, {
   tableName: 'employees',
   timestamps: true,
+  underscored: true,
   indexes: [
     { fields: ['email'] },
     { fields: ['phone_number'] },
@@ -152,6 +154,7 @@ export const Device = sequelize.define('Device', {
 }, {
   tableName: 'devices',
   timestamps: true,
+  underscored: true,
   indexes: [
     { fields: ['employee_id'] },
     { fields: ['link_status'] },
@@ -229,8 +232,7 @@ export const CallLog = sequelize.define('CallLog', {
 }, {
   tableName: 'call_logs',
   timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
+  underscored: true,
   indexes: [
     { fields: ['emp_id'] },
     { fields: ['serial_number'] },
@@ -275,8 +277,7 @@ export const CallFormData = sequelize.define('CallFormData', {
 }, {
   tableName: 'call_form_data',
   timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
+  underscored: true,
   indexes: [
     { fields: ['call_id'] },
     { fields: ['company_name'] },
@@ -339,6 +340,7 @@ export const CallRecording = sequelize.define('CallRecording', {
   tableName: 'call_recordings',
   // Partner recordings table has created_at but no updated_at.
   timestamps: true,
+  underscored: true,
   createdAt: 'created_at',
   updatedAt: false,
   indexes: [
