@@ -493,7 +493,7 @@ export const recordings = ({ req, res }) => {
         { association: 'device', attributes: ['serial_number', 'phone_number_1'] },
       ],
     },
-  ], [['createdAt', 'DESC']]);
+  ], [['created_at', 'DESC']]);
 };
 
 /**
