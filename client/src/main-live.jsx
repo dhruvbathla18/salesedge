@@ -1104,9 +1104,18 @@ function Calls() {
 
 function Recordings() {
   const { token } = useAuth();
-  const result = useData('/recordings?limit=100');
   const [playing, setPlaying] = useState({});
-  const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({ q: '', from: '', to: '', category: '' });
+
+  const params = new URLSearchParams();
+  params.set('limit', '200');
+  if (filters.q) params.set('q', filters.q);
+  if (filters.from) params.set('from', filters.from);
+  if (filters.to) params.set('to', filters.to);
+  if (filters.category) params.set('category', filters.category);
+
+  const result = useData(`/recordings?${params.toString()}`);
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   const playAudio = async (rec) => {
     try {
@@ -1133,35 +1142,69 @@ function Recordings() {
     );
   }
 
-  const recordings = (result.data?.data || []).filter((rec) => {
-    const q = search.toLowerCase();
-    const empName = rec.callLog?.employee?.full_name || '';
-    const key = rec.s3_key || '';
-    const serial = rec.device_serial || '';
-    return !q || empName.toLowerCase().includes(q) || key.toLowerCase().includes(q) || serial.toLowerCase().includes(q);
-  });
+  const recordings = result.data?.data || [];
 
   return (
     <Layout title="Recordings" sub="Secure S3-tracked audio records from CallRecording in PostgreSQL">
       <section className="filter-panel">
         <div className="filter-header">
           <div>
-            <h3>Search Recordings</h3>
-            <p>Filter by employee, device serial, or audio filename</p>
+            <h3>Search &amp; Filters</h3>
+            <p>Filter recordings by employee, filename, date range, or category</p>
           </div>
-          {search && (
-            <button type="button" className="filter-reset" onClick={() => setSearch('')}>
-              Clear
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="filter-reset"
+              onClick={() => setFilters({ q: '', from: '', to: '', category: '' })}
+            >
+              Reset Filters
             </button>
           )}
         </div>
-        <div className="search-shell">
-          <input
-            type="search"
-            placeholder="Search employee, S3 key, or device..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+
+        <div className="filter-grid">
+          <label className="field-inline">
+            <span>Search Text</span>
+            <input
+              type="search"
+              placeholder="Employee, filename, or ID..."
+              value={filters.q}
+              onChange={(e) => setFilters({ ...filters, q: e.target.value })}
+            />
+          </label>
+
+          <label className="field-inline">
+            <span>Category</span>
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+            >
+              <option value="">All Categories</option>
+              <option value="CLIENT">Client</option>
+              <option value="TEAM_MEMBER">Team Member</option>
+              <option value="PERSONAL">Personal</option>
+              <option value="PENDING">Pending</option>
+            </select>
+          </label>
+
+          <label className="field-inline">
+            <span>From Date</span>
+            <input
+              type="date"
+              value={filters.from}
+              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+            />
+          </label>
+
+          <label className="field-inline">
+            <span>To Date</span>
+            <input
+              type="date"
+              value={filters.to}
+              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+            />
+          </label>
         </div>
       </section>
 

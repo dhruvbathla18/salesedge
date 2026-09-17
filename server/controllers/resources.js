@@ -482,18 +482,69 @@ export const call = async (req, res) => {
 /**
  * GET /api/recordings
  */
-export const recordings = ({ req, res }) => {
-  // Partner recordings have no device column; device info is reached via callLog.
-  return paginate(CallRecording, req, res, {}, [
-    {
-      association: 'callLog',
-      attributes: ['id', 'device_serial', 'call_direction', 'duration_seconds', 'call_category', 'createdAt'],
+export const recordings = async ({ req, res }) => {
+  try {
+    const { from, to, category, q, page = 1, limit = 100 } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const pageSize = Math.max(1, Math.min(200, parseInt(limit, 10) || 100));
+
+    // Filters that apply to the recording row itself.
+    const recWhere = {};
+    if (q) {
+      recWhere[Op.or] = [
+        { s3_key: { [Op.iLike]: `%${q}%` } },
+        { file_name: { [Op.iLike]: `%${q}%` } },
+        { '$callLog.employee.full_name$': { [Op.iLike]: `%${q}%` } },
+        { '$callLog.emp_id$': { [Op.iLike]: `%${q}%` } },
+      ];
+    }
+
+    // Filters that apply to the linked call log (date range, category).
+    const callLogWhere = {};
+    if (from || to) {
+      callLogWhere.created_at = {};
+      if (from) callLogWhere.created_at[Op.gte] = new Date(from);
+      if (to) {
+        // Make the "to" date inclusive of the whole day.
+        const toEnd = new Date(to);
+        toEnd.setHours(23, 59, 59, 999);
+        callLogWhere.created_at[Op.lte] = toEnd;
+      }
+    }
+    if (category) callLogWhere.call_category = category;
+    const filterByCallLog = Object.keys(callLogWhere).length > 0;
+
+    const { count, rows } = await CallRecording.findAndCountAll({
+      where: recWhere,
       include: [
-        { association: 'employee', attributes: ['emp_id', 'full_name'] },
-        { association: 'device', attributes: ['serial_number', 'phone_number_1'] },
+        {
+          association: 'callLog',
+          attributes: ['id', 'device_serial', 'call_direction', 'duration_seconds', 'call_category', 'createdAt'],
+          where: filterByCallLog ? callLogWhere : undefined,
+          required: filterByCallLog,
+          include: [
+            { association: 'employee', attributes: ['emp_id', 'full_name'] },
+            { association: 'device', attributes: ['serial_number', 'phone_number_1'] },
+          ],
+        },
       ],
-    },
-  ], [['created_at', 'DESC']]);
+      order: [['created_at', 'DESC']],
+      limit: pageSize,
+      offset: (pageNum - 1) * pageSize,
+      subQuery: false,
+      distinct: true,
+    });
+
+    return res.json({
+      data: rows,
+      total: count,
+      page: pageNum,
+      pages: Math.ceil(count / pageSize),
+    });
+  } catch (error) {
+    console.error('Recordings query error:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 };
 
 /**
