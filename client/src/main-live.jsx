@@ -260,7 +260,8 @@ function useData(path) {
 // ============================================================================
 
 function Dashboard() {
-  const dashData = useData('/dashboard');
+  const [perfPeriod, setPerfPeriod] = useState('all');
+  const dashData = useData(`/dashboard?period=${perfPeriod}`);
   const callsData = useData('/calls?limit=100');
 
   if (dashData.loading || callsData.loading) {
@@ -395,8 +396,18 @@ function Dashboard() {
           <div className="panel-title">
             <div>
               <h3>Top performers</h3>
-              <p>Total completed calls per employee</p>
+              <p>Calls per employee ({perfPeriod === 'all' ? 'all time' : perfPeriod === 'today' ? 'today' : perfPeriod === 'week' ? 'last 7 days' : 'last 30 days'})</p>
             </div>
+            <select
+              value={perfPeriod}
+              onChange={(e) => setPerfPeriod(e.target.value)}
+              style={{ padding: '4px 8px', fontSize: 12 }}
+            >
+              <option value="today">Today</option>
+              <option value="week">Last 7 days</option>
+              <option value="month">Last 30 days</option>
+              <option value="all">All time</option>
+            </select>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={topPerformers}>

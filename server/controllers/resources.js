@@ -67,6 +67,19 @@ export const dashboard = async (req, res) => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
+    // Period filter for the Top Performers chart: today | week | month | all.
+    const period = String(req.query.period || 'all').toLowerCase();
+    const periodStart = new Date();
+    periodStart.setHours(0, 0, 0, 0);
+    if (period === 'today') {
+      // periodStart already at start of today
+    } else if (period === 'week') {
+      periodStart.setDate(periodStart.getDate() - 6); // last 7 days incl. today
+    } else if (period === 'month') {
+      periodStart.setDate(periodStart.getDate() - 29); // last 30 days
+    }
+    const perfCallWhere = period === 'all' ? {} : { created_at: { [Op.gte]: periodStart } };
+
     const [
       totalEmployees,
       activeEmployees,
@@ -96,20 +109,33 @@ export const dashboard = async (req, res) => {
           { association: 'recording', attributes: ['upload_status', 's3_key'] },
         ],
       }),
-      Employee.findAll({
-        attributes: ['emp_id', 'full_name'],
-        include: [{ association: 'callLogs', attributes: ['id', 'call_category'] }],
+      // Top performers: per-employee counts for the selected period.
+      CallLog.findAll({
+        attributes: [
+          'employee_id',
+          [fn('COUNT', col('CallLog.id')), 'total_calls'],
+          [fn('COUNT', literal("CASE WHEN call_category = 'CLIENT' THEN 1 END")), 'client_calls'],
+        ],
+        where: perfCallWhere,
+        group: ['employee_id', 'employee.emp_id', 'employee.full_name'],
+        include: [{ association: 'employee', attributes: ['emp_id', 'full_name'] }],
+        order: [[literal('total_calls'), 'DESC']],
+        raw: true,
+        nest: true,
       }),
     ]);
 
     // Top performers calculation
-    const topPerformers = employeesList.map((emp) => ({
-      name: emp.full_name.split(' ')[0],
-      fullName: emp.full_name,
-      emp_id: emp.emp_id,
-      calls: emp.callLogs ? emp.callLogs.length : 0,
-      clientCalls: emp.callLogs ? emp.callLogs.filter((c) => c.call_category === 'CLIENT').length : 0,
-    })).sort((a, b) => b.calls - a.calls);
+    const topPerformers = employeesList.map((row) => {
+      const fullName = row.employee?.full_name || row.employee_id || '';
+      return {
+        name: (fullName.split(' ')[0]) || row.employee_id,
+        fullName,
+        emp_id: row.employee_id,
+        calls: Number(row.total_calls) || 0,
+        clientCalls: Number(row.client_calls) || 0,
+      };
+    });
 
     const totalDurationSeconds = totalDurationResult || 0;
     const hours = Math.floor(totalDurationSeconds / 3600);
