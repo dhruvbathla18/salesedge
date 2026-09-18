@@ -33,6 +33,9 @@ r.use(protect);
 // Dashboard
 r.get('/dashboard', log('VIEW', 'SYSTEM'), c.dashboard);
 
+// Reports (date-filtered analytics)
+r.get('/reports', log('VIEW', 'SYSTEM'), c.reports);
+
 // Employees
 r.get('/employees/short-calls', log('VIEW', 'EMPLOYEE'), c.shortCallEmployees);
 r.get('/employees', log('VIEW', 'EMPLOYEE'), (req, res) => c.employees({ req, res }));

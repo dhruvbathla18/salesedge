@@ -3,7 +3,7 @@
  * Full REST API handlers matching the relational schema
  */
 
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, literal } from 'sequelize';
 import sequelize from '../config/db.js';
 import {
   Employee,
@@ -267,6 +267,86 @@ export const devices = ({ req, res }) => {
   return paginate(Device, req, res, {}, [
     { association: 'employee', attributes: ['emp_id', 'full_name', 'email', 'phone_number'] },
   ], [['serial_number', 'ASC']]);
+};
+
+/**
+ * GET /api/reports
+ *
+ * Date-filtered analytics for managers: per-employee call breakdown and an
+ * overall category breakdown. Computed with DB aggregation (not capped), so
+ * totals are accurate. Optional filters: from, to (dates), employee (emp_id).
+ * Read-only — does not touch the schema.
+ */
+export const reports = async (req, res) => {
+  try {
+    const { from, to, employee } = req.query;
+
+    const where = {};
+    if (from || to) {
+      where.created_at = {};
+      if (from) where.created_at[Op.gte] = new Date(from);
+      if (to) {
+        const toEnd = new Date(to);
+        toEnd.setHours(23, 59, 59, 999);
+        where.created_at[Op.lte] = toEnd;
+      }
+    }
+    if (employee) where.employee_id = employee;
+
+    // Per-employee aggregation: total calls, client calls, total duration.
+    const perEmployeeRaw = await CallLog.findAll({
+      attributes: [
+        'employee_id',
+        [fn('COUNT', col('CallLog.id')), 'total_calls'],
+        [fn('COUNT', literal("CASE WHEN call_category = 'CLIENT' THEN 1 END")), 'client_calls'],
+        [fn('COALESCE', fn('SUM', col('duration_seconds')), 0), 'total_duration'],
+      ],
+      where,
+      group: ['employee_id', 'employee.emp_id', 'employee.full_name'],
+      include: [{ association: 'employee', attributes: ['emp_id', 'full_name'] }],
+      order: [[literal('total_calls'), 'DESC']],
+      raw: true,
+      nest: true,
+    });
+
+    const perEmployee = perEmployeeRaw.map((r) => ({
+      emp_id: r.employee_id,
+      name: (r.employee?.full_name || r.employee_id || '').split(' ')[0] || r.employee_id,
+      fullName: r.employee?.full_name || r.employee_id,
+      calls: Number(r.total_calls) || 0,
+      clientCalls: Number(r.client_calls) || 0,
+      durationSeconds: Number(r.total_duration) || 0,
+    }));
+
+    // Category breakdown across the whole (filtered) range.
+    const categoryRaw = await CallLog.findAll({
+      attributes: ['call_category', [fn('COUNT', col('id')), 'count']],
+      where,
+      group: ['call_category'],
+      raw: true,
+    });
+    const categoryData = categoryRaw.map((r) => ({
+      name: String(r.call_category || 'UNKNOWN').replace('_', ' '),
+      count: Number(r.count) || 0,
+    }));
+
+    const totalCalls = perEmployee.reduce((s, e) => s + e.calls, 0);
+    const totalDuration = perEmployee.reduce((s, e) => s + e.durationSeconds, 0);
+
+    return res.json({
+      range: { from: from || null, to: to || null },
+      totals: {
+        calls: totalCalls,
+        durationSeconds: totalDuration,
+        employees: perEmployee.length,
+      },
+      perEmployee,
+      categoryData,
+    });
+  } catch (error) {
+    console.error('Reports query error:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 };
 
 /**

@@ -1289,10 +1289,27 @@ function Recordings() {
 // ============================================================================
 
 function Reports() {
-  const dashData = useData('/dashboard');
-  const callsData = useData('/calls?limit=100');
+  const [filters, setFilters] = useState({ from: '', to: '', employee: '' });
 
-  if (dashData.loading || callsData.loading) {
+  // Report data (date-filtered, accurate DB aggregation).
+  const rParams = new URLSearchParams();
+  if (filters.from) rParams.set('from', filters.from);
+  if (filters.to) rParams.set('to', filters.to);
+  if (filters.employee) rParams.set('employee', filters.employee);
+  const reportData = useData(`/reports?${rParams.toString()}`);
+
+  // Employee list for the dropdown.
+  const empData = useData('/employees?limit=200');
+
+  // The matching calls list (same filters) for the table below.
+  const cParams = new URLSearchParams();
+  cParams.set('limit', '200');
+  if (filters.from) cParams.set('from', filters.from);
+  if (filters.to) cParams.set('to', filters.to);
+  if (filters.employee) cParams.set('employee', filters.employee);
+  const callsData = useData(`/calls?${cParams.toString()}`);
+
+  if (reportData.loading) {
     return (
       <Layout title="Reports" sub="Sales activity analytics">
         <Loading />
@@ -1300,28 +1317,107 @@ function Reports() {
     );
   }
 
-  const calls = callsData.data?.data || [];
-  const topPerformers = dashData.data?.topPerformers || [];
+  if (reportData.error) {
+    return (
+      <Layout title="Reports" sub="Sales activity analytics">
+        <ErrorPanel message={reportData.error} />
+      </Layout>
+    );
+  }
 
-  // Group by category
-  const categories = ['CLIENT', 'TEAM_MEMBER', 'PERSONAL', 'MISSED'];
-  const categoryData = categories.map((cat) => ({
-    name: cat.replace('_', ' '),
-    count: calls.filter((c) => c.call_category === cat).length
-  }));
+  const perEmployee = reportData.data?.perEmployee || [];
+  const categoryData = reportData.data?.categoryData || [];
+  const totals = reportData.data?.totals || { calls: 0, durationSeconds: 0, employees: 0 };
+  const employees = empData.data?.data || [];
+  const calls = callsData.data?.data || [];
+  const hasActiveFilters = Boolean(filters.from || filters.to || filters.employee);
+
+  const fmtDuration = (s) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
 
   return (
     <Layout title="Reports" sub="Performance and call volume analytics powered by PostgreSQL">
+      {/* Filters */}
+      <section className="filter-panel">
+        <div className="filter-header">
+          <div>
+            <h3>Report Filters</h3>
+            <p>View call activity by date range and individual employee</p>
+          </div>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="filter-reset"
+              onClick={() => setFilters({ from: '', to: '', employee: '' })}
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+        <div className="filter-grid">
+          <label className="field-inline">
+            <span>Employee</span>
+            <select
+              value={filters.employee}
+              onChange={(e) => setFilters({ ...filters, employee: e.target.value })}
+            >
+              <option value="">All Employees</option>
+              {employees.map((emp) => (
+                <option key={emp.emp_id} value={emp.emp_id}>
+                  {emp.full_name} ({emp.emp_id})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field-inline">
+            <span>From Date</span>
+            <input
+              type="date"
+              value={filters.from}
+              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+            />
+          </label>
+          <label className="field-inline">
+            <span>To Date</span>
+            <input
+              type="date"
+              value={filters.to}
+              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* Summary metrics */}
+      <section className="grid-equal" style={{ marginBottom: 16 }}>
+        <article className="panel" style={{ padding: '16px 20px' }}>
+          <p style={{ margin: 0, color: '#64748b' }}>Total Calls</p>
+          <b style={{ fontSize: 28 }}>{totals.calls}</b>
+        </article>
+        <article className="panel" style={{ padding: '16px 20px' }}>
+          <p style={{ margin: 0, color: '#64748b' }}>Total Talk Time</p>
+          <b style={{ fontSize: 28 }}>{fmtDuration(totals.durationSeconds)}</b>
+        </article>
+        <article className="panel" style={{ padding: '16px 20px' }}>
+          <p style={{ margin: 0, color: '#64748b' }}>Active Employees</p>
+          <b style={{ fontSize: 28 }}>{totals.employees}</b>
+        </article>
+      </section>
+
+      {/* Charts */}
       <section className="grid-equal">
         <article className="panel">
           <div className="panel-title">
             <div>
               <h3>Calls by Employee</h3>
-              <p>Total volume per sales executive</p>
+              <p>Total volume per sales executive{hasActiveFilters ? ' (filtered)' : ''}</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={topPerformers}>
+            <BarChart data={perEmployee.slice(0, 15)}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
               <Tooltip />
@@ -1334,7 +1430,7 @@ function Reports() {
           <div className="panel-title">
             <div>
               <h3>Calls by Classification</h3>
-              <p>Breakdown across client, internal, and personal</p>
+              <p>Breakdown across client, internal, and personal{hasActiveFilters ? ' (filtered)' : ''}</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={260}>
@@ -1346,6 +1442,49 @@ function Reports() {
             </BarChart>
           </ResponsiveContainer>
         </article>
+      </section>
+
+      {/* Per-employee summary table */}
+      <section className="panel table-panel">
+        <div className="panel-title">
+          <div>
+            <h3>Employee Breakdown</h3>
+            <p>Per-employee call counts and talk time for the selected range</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Total Calls</th>
+                <th>Client Calls</th>
+                <th>Talk Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perEmployee.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                    No calls in the selected range
+                  </td>
+                </tr>
+              ) : (
+                perEmployee.map((e) => (
+                  <tr key={e.emp_id}>
+                    <td>
+                      <b>{e.fullName}</b>
+                      <small>{e.emp_id}</small>
+                    </td>
+                    <td>{e.calls}</td>
+                    <td>{e.clientCalls}</td>
+                    <td>{fmtDuration(e.durationSeconds)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <CallsTable calls={calls} />
