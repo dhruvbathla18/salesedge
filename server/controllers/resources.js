@@ -159,15 +159,23 @@ export const dashboard = async (req, res) => {
     const countByDay = new Map(
       dailyRaw.map((r) => [String(r.day).slice(0, 10), Number(r.count) || 0]),
     );
+    const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dailyTrend = [];
     for (let i = 6; i >= 0; i -= 1) {
       const d = new Date();
       d.setHours(0, 0, 0, 0);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      // Build the key from LOCAL date parts (matches how created_at::date is
+      // grouped in the server's timezone), avoiding a UTC/local off-by-one.
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const key = `${y}-${m}-${day}`;
+      const label = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
       dailyTrend.push({
         date: key,
-        label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        label,
         calls: countByDay.get(key) || 0,
       });
     }
