@@ -141,12 +141,43 @@ export const dashboard = async (req, res) => {
     const hours = Math.floor(totalDurationSeconds / 3600);
     const minutes = Math.floor((totalDurationSeconds % 3600) / 60);
 
+    // Real daily call volume for the last 7 days (accurate, all calls).
+    const weekAgo = new Date();
+    weekAgo.setHours(0, 0, 0, 0);
+    weekAgo.setDate(weekAgo.getDate() - 6);
+    const dailyRaw = await CallLog.findAll({
+      attributes: [
+        [fn('date', col('created_at')), 'day'],
+        [fn('COUNT', col('id')), 'count'],
+      ],
+      where: { created_at: { [Op.gte]: weekAgo } },
+      group: [fn('date', col('created_at'))],
+      order: [[fn('date', col('created_at')), 'ASC']],
+      raw: true,
+    });
+    // Build a continuous 7-day series (fill missing days with 0).
+    const countByDay = new Map(
+      dailyRaw.map((r) => [String(r.day).slice(0, 10), Number(r.count) || 0]),
+    );
+    const dailyTrend = [];
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      dailyTrend.push({
+        date: key,
+        label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        calls: countByDay.get(key) || 0,
+      });
+    }
+
     return res.json({
       metrics: {
         totalEmployees,
         activeEmployees,
         totalCalls,
-        todayCalls: todayCalls || Math.round(totalCalls * 0.3),
+        todayCalls,
         clientCalls,
         businessRatio: totalCalls > 0 ? Math.round((clientCalls / totalCalls) * 100) : 0,
         totalRecordings,
@@ -155,6 +186,7 @@ export const dashboard = async (req, res) => {
         durationFormatted: `${hours}h ${minutes}m`,
       },
       topPerformers,
+      dailyTrend,
       recentCalls,
     });
   } catch (error) {

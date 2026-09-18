@@ -284,12 +284,8 @@ function Dashboard() {
   const topPerformers = dashData.data.topPerformers || [];
   const calls = callsData.data?.data || [];
 
-  // 7-day call distribution chart data
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const dailyData = days.map((d, idx) => ({
-    day: d,
-    calls: calls.filter((c) => new Date(c.createdAt || c.created_at).getDay() === idx).length
-  }));
+  // Real 7-day call volume from the backend (accurate, all calls, not capped).
+  const dailyData = dashData.data?.dailyTrend || [];
 
   return (
     <Layout title="Dashboard" sub="Live sales performance & call intelligence from PostgreSQL">
@@ -331,7 +327,7 @@ function Dashboard() {
           <div className="panel-title">
             <div>
               <h3>Call volume trend</h3>
-              <p>Weekly call distribution across all linked devices</p>
+              <p>Calls per day over the last 7 days</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
@@ -342,11 +338,11 @@ function Dashboard() {
                   <stop offset="100%" stopColor="#6366f1" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="day" axisLine={false} tickLine={false} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} axisLine={false} tickLine={false} />
               <Tooltip />
               <Area
-                type="monotone"
+                type="linear"
                 dataKey="calls"
                 stroke="#6366f1"
                 strokeWidth={3}
