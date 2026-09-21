@@ -157,9 +157,9 @@ function Layout({ children, title, sub }) {
     <>
       <aside>
         <div className="brand">
-          <div className="brand-icon">M</div>
+          <img src="/logo.png" alt="MIST Avinya" className="brand-logo" />
           <div>
-            MIST <b>Avinya</b>
+            <b>SalesEdgeAi</b>
             <small>Sales Intelligence</small>
           </div>
         </div>
@@ -1803,12 +1803,11 @@ function Login() {
     <div className="login">
       <div className="login-card">
         <div className="login-brand">
-          <div className="brand-icon">M</div>
-          <div>MIST <b>Avinya</b></div>
+          <img src="/logo.png" alt="MIST Avinya" className="login-logo" />
+          <div><b>SalesEdgeAi</b></div>
         </div>
 
         <h1>Sign In</h1>
-        <p>Access the PostgreSQL Sales Intelligence Portal</p>
 
         <form onSubmit={handleSubmit} autoComplete="off">
           {/* Hidden decoy fields absorb the browser's autofill attempt so the
