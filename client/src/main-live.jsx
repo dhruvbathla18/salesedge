@@ -255,12 +255,37 @@ function useData(path) {
   return state;
 }
 
+/**
+ * Like useState, but persists the value under a key so filter selections
+ * survive navigation and page refresh (stored in the browser).
+ */
+function usePersistedState(key, defaultValue) {
+  const [value, setValue] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem(key);
+      return saved !== null ? JSON.parse(saved) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore storage errors (e.g. private mode)
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 // ============================================================================
 // PAGE: DASHBOARD
 // ============================================================================
 
 function Dashboard() {
-  const [perfPeriod, setPerfPeriod] = useState('all');
+  const [perfPeriod, setPerfPeriod] = usePersistedState('filters:dashboardPeriod', 'all');
   const dashData = useData(`/dashboard?period=${perfPeriod}`);
   const callsData = useData('/calls?limit=100');
 
@@ -671,7 +696,7 @@ function CallsTable({ calls = [], compact = false }) {
 
 function Employees() {
   const result = useData('/employees?limit=100');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = usePersistedState('filters:employeesSearch', '');
 
   if (result.loading) {
     return (
@@ -783,7 +808,7 @@ function Employees() {
 
 function Companies() {
   const result = useData('/companies');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = usePersistedState('filters:companiesSearch', '');
 
   if (result.loading) {
     return (
@@ -885,7 +910,7 @@ function Companies() {
 // ============================================================================
 
 function Calls() {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = usePersistedState('filters:calls', {
     direction: '',
     category: '',
     recordingStatus: '',
@@ -1112,7 +1137,7 @@ function Calls() {
 function Recordings() {
   const { token } = useAuth();
   const [playing, setPlaying] = useState({});
-  const [filters, setFilters] = useState({ q: '', from: '', to: '', category: '' });
+  const [filters, setFilters] = usePersistedState('filters:recordings', { q: '', from: '', to: '', category: '' });
 
   const params = new URLSearchParams();
   params.set('limit', '200');
@@ -1296,7 +1321,7 @@ function Recordings() {
 // ============================================================================
 
 function Reports() {
-  const [filters, setFilters] = useState({ from: '', to: '', employee: '' });
+  const [filters, setFilters] = usePersistedState('filters:reports', { from: '', to: '', employee: '' });
 
   // Report data (date-filtered, accurate DB aggregation).
   const rParams = new URLSearchParams();
@@ -1505,7 +1530,7 @@ function Reports() {
 
 function Devices() {
   const result = useData('/devices');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = usePersistedState('filters:devicesSearch', '');
 
   if (result.loading) {
     return (
