@@ -150,6 +150,43 @@ function ErrorPanel({ message }) {
   );
 }
 
+/**
+ * Reusable pagination control. Shows Prev/Next and page X of Y, plus the
+ * total record count. Calls onPageChange with the new (1-based) page.
+ */
+function Pagination({ page, pages, total, onPageChange }) {
+  const totalPages = Math.max(1, pages || 1);
+  const current = Math.min(Math.max(1, page || 1), totalPages);
+  if (totalPages <= 1 && !total) return null;
+
+  return (
+    <div className="pagination">
+      <span className="pagination-info">
+        {typeof total === 'number' ? `${total} record${total === 1 ? '' : 's'} · ` : ''}
+        Page {current} of {totalPages}
+      </span>
+      <div className="pagination-controls">
+        <button
+          type="button"
+          className="filter-reset"
+          disabled={current <= 1}
+          onClick={() => onPageChange(current - 1)}
+        >
+          ‹ Prev
+        </button>
+        <button
+          type="button"
+          className="filter-reset"
+          disabled={current >= totalPages}
+          onClick={() => onPageChange(current + 1)}
+        >
+          Next ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Layout({ children, title, sub }) {
   const { user, logout } = useAuth();
 
@@ -286,7 +323,17 @@ function usePersistedState(key, defaultValue) {
 
 function Dashboard() {
   const [perfPeriod, setPerfPeriod] = usePersistedState('filters:dashboardPeriod', 'all');
-  const dashData = useData(`/dashboard?period=${perfPeriod}`);
+  const [perfRange, setPerfRange] = usePersistedState('filters:dashboardRange', { from: '', to: '' });
+
+  const dashParams = new URLSearchParams();
+  if (perfRange.from || perfRange.to) {
+    // Custom date range takes precedence over the preset period.
+    if (perfRange.from) dashParams.set('from', perfRange.from);
+    if (perfRange.to) dashParams.set('to', perfRange.to);
+  } else {
+    dashParams.set('period', perfPeriod);
+  }
+  const dashData = useData(`/dashboard?${dashParams.toString()}`);
   const callsData = useData('/calls?limit=100');
 
   if (dashData.loading || callsData.loading) {
@@ -417,18 +464,49 @@ function Dashboard() {
           <div className="panel-title">
             <div>
               <h3>Top performers</h3>
-              <p>Calls per employee ({perfPeriod === 'all' ? 'all time' : perfPeriod === 'today' ? 'today' : perfPeriod === 'week' ? 'last 7 days' : 'last 30 days'})</p>
+              <p>
+                {perfRange.from || perfRange.to
+                  ? `Calls per employee (${perfRange.from || '…'} to ${perfRange.to || '…'})`
+                  : `Calls per employee (${perfPeriod === 'all' ? 'all time' : perfPeriod === 'today' ? 'today' : perfPeriod === 'week' ? 'last 7 days' : 'last 30 days'})`}
+              </p>
             </div>
-            <select
-              value={perfPeriod}
-              onChange={(e) => setPerfPeriod(e.target.value)}
-              style={{ padding: '4px 8px', fontSize: 12 }}
-            >
-              <option value="today">Today</option>
-              <option value="week">Last 7 days</option>
-              <option value="month">Last 30 days</option>
-              <option value="all">All time</option>
-            </select>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <select
+                value={perfPeriod}
+                onChange={(e) => setPerfPeriod(e.target.value)}
+                disabled={Boolean(perfRange.from || perfRange.to)}
+                style={{ padding: '4px 8px', fontSize: 12 }}
+              >
+                <option value="today">Today</option>
+                <option value="week">Last 7 days</option>
+                <option value="month">Last 30 days</option>
+                <option value="all">All time</option>
+              </select>
+              <input
+                type="date"
+                value={perfRange.from}
+                onChange={(e) => setPerfRange({ ...perfRange, from: e.target.value })}
+                style={{ padding: '3px 6px', fontSize: 12 }}
+                title="From date"
+              />
+              <input
+                type="date"
+                value={perfRange.to}
+                onChange={(e) => setPerfRange({ ...perfRange, to: e.target.value })}
+                style={{ padding: '3px 6px', fontSize: 12 }}
+                title="To date"
+              />
+              {(perfRange.from || perfRange.to) && (
+                <button
+                  type="button"
+                  className="filter-reset"
+                  onClick={() => setPerfRange({ from: '', to: '' })}
+                  style={{ fontSize: 12 }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={topPerformers}>
@@ -910,7 +988,7 @@ function Companies() {
 // ============================================================================
 
 function Calls() {
-  const [filters, setFilters] = usePersistedState('filters:calls', {
+  const [filters, setFiltersRaw] = usePersistedState('filters:calls', {
     direction: '',
     category: '',
     recordingStatus: '',
@@ -923,6 +1001,11 @@ function Calls() {
     durationValue2: '',
     durationUnit: 'sec' // 'sec' | 'min'
   });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
+
+  // Changing any filter resets to page 1.
+  const setFilters = (next) => { setPage(1); setFiltersRaw(next); };
 
   const queryParams = new URLSearchParams();
   const passthrough = ['direction', 'category', 'recordingStatus', 'company', 'from', 'to', 'q'];
@@ -943,7 +1026,8 @@ function Calls() {
     queryParams.set('maxDuration', String(Math.max(dv1, dv2) * mul + 1)); // inclusive upper
   }
 
-  queryParams.set('limit', '200');
+  queryParams.set('limit', String(PAGE_SIZE));
+  queryParams.set('page', String(page));
 
   const result = useData(`/calls?${queryParams.toString()}`);
   const hasActiveFilters =
@@ -1126,6 +1210,12 @@ function Calls() {
       </section>
 
       <CallsTable calls={calls} />
+      <Pagination
+        page={result.data?.page || page}
+        pages={result.data?.pages || 1}
+        total={result.data?.total}
+        onPageChange={setPage}
+      />
     </Layout>
   );
 }
@@ -1137,10 +1227,16 @@ function Calls() {
 function Recordings() {
   const { token } = useAuth();
   const [playing, setPlaying] = useState({});
-  const [filters, setFilters] = usePersistedState('filters:recordings', { q: '', from: '', to: '', category: '' });
+  const [filters, setFiltersRaw] = usePersistedState('filters:recordings', { q: '', from: '', to: '', category: '' });
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
+
+  // Changing any filter resets to page 1.
+  const setFilters = (next) => { setPage(1); setFiltersRaw(next); };
 
   const params = new URLSearchParams();
-  params.set('limit', '200');
+  params.set('limit', String(PAGE_SIZE));
+  params.set('page', String(page));
   if (filters.q) params.set('q', filters.q);
   if (filters.from) params.set('from', filters.from);
   if (filters.to) params.set('to', filters.to);
@@ -1311,6 +1407,12 @@ function Recordings() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={result.data?.page || page}
+          pages={result.data?.pages || 1}
+          total={result.data?.total}
+          onPageChange={setPage}
+        />
       </section>
     </Layout>
   );

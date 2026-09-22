@@ -67,18 +67,28 @@ export const dashboard = async (req, res) => {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // Period filter for the Top Performers chart: today | week | month | all.
+    // Top Performers filter: explicit from/to override the period preset.
+    // period: today | week | month | all.
+    const { from: perfFrom, to: perfTo } = req.query;
     const period = String(req.query.period || 'all').toLowerCase();
-    const periodStart = new Date();
-    periodStart.setHours(0, 0, 0, 0);
-    if (period === 'today') {
-      // periodStart already at start of today
-    } else if (period === 'week') {
-      periodStart.setDate(periodStart.getDate() - 6); // last 7 days incl. today
-    } else if (period === 'month') {
-      periodStart.setDate(periodStart.getDate() - 29); // last 30 days
+    let perfCallWhere = {};
+    if (perfFrom || perfTo) {
+      const range = {};
+      if (perfFrom) range[Op.gte] = new Date(perfFrom);
+      if (perfTo) {
+        const end = new Date(perfTo);
+        end.setHours(23, 59, 59, 999);
+        range[Op.lte] = end;
+      }
+      perfCallWhere = { created_at: range };
+    } else if (period !== 'all') {
+      const periodStart = new Date();
+      periodStart.setHours(0, 0, 0, 0);
+      if (period === 'week') periodStart.setDate(periodStart.getDate() - 6);
+      else if (period === 'month') periodStart.setDate(periodStart.getDate() - 29);
+      // 'today' -> periodStart stays at start of today
+      perfCallWhere = { created_at: { [Op.gte]: periodStart } };
     }
-    const perfCallWhere = period === 'all' ? {} : { created_at: { [Op.gte]: periodStart } };
 
     const [
       totalEmployees,
